@@ -83,6 +83,16 @@ int main(void) {
     nev = 0; play(c, 90, 98, 120); stop(c); k = ons(notes, 4096);
     int ok3 = 1; for (int i = 0; i < k; i++) { int pc = notes[i] % 12; if (pc != 0 && pc != 7 && pc != 2) ok3 = 0; }
     CHECK(k > 0 && ok3, "só C, G e D (ordem tonal de C)");
+    http(c, "POST", "/cfg", "", "escala 8\nmascara 65\ntonica 2\n", o, sizeof o);
+    nev = 0; play(c, 100, 108, 120); stop(c); k = ons(notes, 4096);
+    int okm = 1; for (int i = 0; i < k; i++) { int pc = notes[i] % 12; if (pc != 2 && pc != 8) okm = 0; }
+    CHECK(k > 0 && okm, "escala personalizada (T + #IV de D): só D e G#");
+    http(c, "POST", "/cfg", "", "passos 16\nmudanca 50\nescala 7\ntonica 0\n", o, sizeof o);
+    http(c, "POST", "/acao", "", "escrever 1", o, sizeof o);
+    play(c, 110, 116, 120); stop(c);
+    http(c, "POST", "/acao", "", "escrever 0", o, sizeof o);
+    http(c, "GET", "/estado", "", "", o, sizeof o);
+    CHECK(strstr(o, "\"reg\":65535") != NULL, "WRITE + segurado enche o registrador de 1");
 
     puts("5) registrador: bit, memórias e estado");
     http(c, "POST", "/acao", "", "limpar", o, sizeof o); play(c, 100, 100.1, 120);

@@ -21,10 +21,10 @@
 static const char *TON_NOME[12] = { "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B" };
 static const int CGORD[12] = { 0, 7, 2, 9, 4, 11, 6, 8, 3, 10, 5, 1 };                 /* ordem tonal lídia */
 static const char *CGOL[12] = { "T", "V", "II", "VI", "III", "VII", "#IV", "#V", "bIII", "bVII", "IV", "bII" };
-#define NESC 8
+#define NESC 9
 static const char *ESC_NOME[NESC] = { "Lídio", "Lídio aumentado", "Lídio diminuto", "Lídio b7",
-                                      "Auxiliar aumentada", "Auxiliar diminuta", "Auxiliar diminuta blues", "Ordem tonal" };
-static const char *ESC_CURTO[NESC] = { "Lidio", "Lid aum", "Lid dim", "Lid b7", "Aux aum", "Aux dim", "Aux blues", "Ordem" };
+                                      "Auxiliar aumentada", "Auxiliar diminuta", "Auxiliar diminuta blues", "Ordem tonal", "Personalizada" };
+static const char *ESC_CURTO[NESC] = { "Lidio", "Lid aum", "Lid dim", "Lid b7", "Aux aum", "Aux dim", "Aux blues", "Ordem", "Pessoal" };
 static const int ESC_IV[7][9] = {   /* intervalos sobre a tônica lídia, -1 = fim */
     { 0, 2, 4, 6, 7, 9, 11, -1 }, { 0, 2, 4, 6, 8, 9, 11, -1 }, { 0, 2, 3, 6, 7, 9, 11, -1 }, { 0, 2, 4, 6, 7, 9, 10, -1 },
     { 0, 2, 4, 6, 8, 10, -1 }, { 0, 2, 3, 5, 6, 8, 9, 11, -1 }, { 0, 1, 3, 4, 6, 7, 9, 10, -1 } };
@@ -35,18 +35,18 @@ static void nota_nome(int n, char *o, size_t k) { snprintf(o, k, "%s%d", NN[((n 
 
 /* ---------------- parâmetros ---------------- */
 typedef struct {
-    int ton, esc, ordK, passos, mud, div, ext, base, dens, dur, acento, swing, relogio, bpm, canal, midi, som, timbre, vol, raiz, inteira, seguir;
+    int ton, esc, ordK, masc, passos, mud, div, ext, base, dens, dur, acento, swing, relogio, bpm, canal, midi, som, timbre, vol, raiz, inteira, seguir;
     float atk, rel;
 } Par;
 static void par_default(Par *p) {
     memset(p, 0, sizeof *p);
-    p->ton = 5; p->esc = 0; p->ordK = 7; p->passos = 8; p->mud = 15; p->div = 2; p->ext = 2; p->base = 60; p->dens = 75;
+    p->ton = 5; p->esc = 0; p->ordK = 7; p->masc = 0xAD5; p->passos = 8; p->mud = 15; p->div = 2; p->ext = 2; p->base = 60; p->dens = 75;
     p->dur = 60; p->acento = 40; p->swing = 50; p->relogio = 0; p->bpm = 110; p->canal = 1; p->midi = 1; p->som = 1;
     p->timbre = 0; p->vol = 80; p->raiz = 60; p->inteira = 0; p->seguir = 0; p->atk = .004f; p->rel = .25f;
 }
 static int clampi(int v, int a, int b) { return v < a ? a : v > b ? b : v; }
 static void par_fix(Par *p) {
-    p->ton = clampi(p->ton, 0, 11); p->esc = clampi(p->esc, 0, NESC - 1); p->ordK = clampi(p->ordK, 1, 12); p->passos = clampi(p->passos, 2, 16);
+    p->ton = clampi(p->ton, 0, 11); p->esc = clampi(p->esc, 0, NESC - 1); p->ordK = clampi(p->ordK, 1, 12); p->masc &= 0xFFF; if (!p->masc) p->masc = 1; p->passos = clampi(p->passos, 2, 16);
     p->mud = clampi(p->mud, 0, 100); p->div = clampi(p->div, 0, 4); p->ext = clampi(p->ext, 1, 4); p->base = clampi(p->base, 12, 96);
     p->dens = clampi(p->dens, 0, 100); p->dur = clampi(p->dur, 5, 100); p->acento = clampi(p->acento, 0, 100); p->swing = clampi(p->swing, 50, 75);
     p->relogio = clampi(p->relogio, 0, 1); p->bpm = clampi(p->bpm, 30, 300); p->canal = clampi(p->canal, 1, 16); p->midi = !!p->midi;
@@ -126,7 +126,7 @@ static int root_from_name(const char *name) {
 
 /* ---------------- núcleo ---------------- */
 typedef struct { int active, rel, src, note; double pos, step; float gain, env, atkInc, relInc, ph, lp, tine; uint32_t age; } Voice;
-enum { OP_NOVO = 1, OP_LIMPAR, OP_BIT, OP_REG, OP_TOCAR, OP_PARAR };
+enum { OP_NOVO = 1, OP_LIMPAR, OP_BIT, OP_REG, OP_TOCAR, OP_PARAR, OP_ESCREVER };
 typedef struct { int op, a, b; } Op;
 typedef struct { int ok; uint16_t reg; int len; } Mem;
 
@@ -141,7 +141,7 @@ struct TmCore {
     Sample *cur; Sample *trash[8]; unsigned trashGen[8]; unsigned gen, audioGen;
     /* áudio */
     double sr;
-    uint16_t reg; uint32_t rng; int pos; unsigned steps;
+    uint16_t reg; uint32_t rng; int pos; unsigned steps; int escrever;
     int notes[64], nnotes;
     int intRun; double intPpq, lastEnd; int running;
     int melNote, melCh; long offRemain;      /* nota MIDI soando e quantos quadros faltam para soltar */
@@ -227,6 +227,7 @@ static int load_sample(TmCore *c, const char *path, int setRoot, char *err, size
 static void build_notes(TmCore *c) {
     const Par *p = &c->P; int pcs[12] = { 0 };
     if (p->esc == 7) for (int i = 0; i < p->ordK; i++) pcs[CGORD[i]] = 1;
+    else if (p->esc == 8) for (int i = 0; i < 12; i++) pcs[i] = (p->masc >> i) & 1;   /* escala personalizada */
     else for (int i = 0; ESC_IV[p->esc][i] >= 0; i++) pcs[ESC_IV[p->esc][i]] = 1;
     c->nnotes = 0;
     for (int n = p->base; n <= p->base + 12 * p->ext && n < 128 && c->nnotes < 64; n++)
@@ -247,6 +248,7 @@ static void pull(TmCore *c) {
         else if (o.op == OP_REG) { c->reg = (uint16_t) o.a; if (o.b >= 2 && o.b <= 16) c->P.passos = c->pP.passos = o.b; }
         else if (o.op == OP_TOCAR) { c->intRun = 1; c->intPpq = 0; }
         else if (o.op == OP_PARAR) c->intRun = 0;
+        else if (o.op == OP_ESCREVER) c->escrever = o.a;
     }
     __atomic_store_n(&c->nops, 0, __ATOMIC_RELEASE);
     pthread_mutex_unlock(&c->mx);
@@ -319,6 +321,7 @@ static void tm_step(TmCore *c, int frame, double stepSec, TmMidi *out, int *nout
     int len = p->passos;
     int bit = (c->reg >> (len - 1)) & 1;
     if (frand(&c->rng) < p->mud / 100.0f) bit ^= 1;      /* mudança: 0% = loop fixo; 100% = loop invertido (dobra) */
+    if (c->escrever) bit = c->escrever > 0;              /* chave WRITE segurada: escreve 1 ou 0 */
     c->reg = (uint16_t) ((c->reg << 1) | bit);
     c->pos = (c->pos + 1) % len;
     c->steps++;
@@ -497,6 +500,7 @@ static void par_apply(Par *p, const char *body) {
         if (sscanf(line, "%31s %lf", k, &v) == 2) {
             int iv = (int) lround(v);
             if (!strcmp(k, "tonica")) p->ton = iv; else if (!strcmp(k, "escala")) p->esc = iv; else if (!strcmp(k, "ordem")) p->ordK = iv;
+            else if (!strcmp(k, "mascara")) p->masc = iv;
             else if (!strcmp(k, "passos")) p->passos = iv; else if (!strcmp(k, "mudanca")) p->mud = iv; else if (!strcmp(k, "divisao")) p->div = iv;
             else if (!strcmp(k, "extensao")) p->ext = iv; else if (!strcmp(k, "base")) p->base = iv; else if (!strcmp(k, "densidade")) p->dens = iv;
             else if (!strcmp(k, "duracao")) p->dur = iv; else if (!strcmp(k, "acento")) p->acento = iv; else if (!strcmp(k, "swing")) p->swing = iv;
@@ -510,9 +514,9 @@ static void par_apply(Par *p, const char *body) {
     par_fix(p);
 }
 static void par_text(const Par *p, Buf *b) {
-    bfmt(b, "tonica %d\nescala %d\nordem %d\npassos %d\nmudanca %d\ndivisao %d\nextensao %d\nbase %d\ndensidade %d\nduracao %d\nacento %d\nswing %d\n"
+    bfmt(b, "tonica %d\nescala %d\nordem %d\nmascara %d\npassos %d\nmudanca %d\ndivisao %d\nextensao %d\nbase %d\ndensidade %d\nduracao %d\nacento %d\nswing %d\n"
             "relogio %d\nbpm %d\ncanal %d\nmidi %d\nsom %d\ntimbre %d\nvolume %d\nraiz %d\ninteira %d\nseguir %d\nataque %.4f\nsoltura %.4f\n",
-         p->ton, p->esc, p->ordK, p->passos, p->mud, p->div, p->ext, p->base, p->dens, p->dur, p->acento, p->swing,
+         p->ton, p->esc, p->ordK, p->masc, p->passos, p->mud, p->div, p->ext, p->base, p->dens, p->dur, p->acento, p->swing,
          p->relogio, p->bpm, p->canal, p->midi, p->som, p->timbre, p->vol, p->raiz, p->inteira, p->seguir, p->atk, p->rel);
 }
 
@@ -572,10 +576,10 @@ static void cfg_json(TmCore *c, Buf *b) {
     if (c->cur) { snprintf(nm, sizeof nm, "%s", c->cur->name); snprintf(pth, sizeof pth, "%s", c->cur->path); }
     memcpy(mem, c->mem, sizeof mem);
     pthread_mutex_unlock(&c->mx);
-    bfmt(b, "{\"tonica\":%d,\"escala\":%d,\"ordem\":%d,\"passos\":%d,\"mudanca\":%d,\"divisao\":%d,\"extensao\":%d,\"base\":%d,\"densidade\":%d,"
+    bfmt(b, "{\"tonica\":%d,\"escala\":%d,\"ordem\":%d,\"mascara\":%d,\"passos\":%d,\"mudanca\":%d,\"divisao\":%d,\"extensao\":%d,\"base\":%d,\"densidade\":%d,"
             "\"duracao\":%d,\"acento\":%d,\"swing\":%d,\"relogio\":%d,\"bpm\":%d,\"canal\":%d,\"midi\":%d,\"som\":%d,\"timbre\":%d,\"volume\":%d,"
             "\"raiz\":%d,\"inteira\":%d,\"seguir\":%d,\"ataque\":%.4f,\"soltura\":%.4f,\"amostra\":",
-         p.ton, p.esc, p.ordK, p.passos, p.mud, p.div, p.ext, p.base, p.dens, p.dur, p.acento, p.swing, p.relogio, p.bpm, p.canal,
+         p.ton, p.esc, p.ordK, p.masc, p.passos, p.mud, p.div, p.ext, p.base, p.dens, p.dur, p.acento, p.swing, p.relogio, p.bpm, p.canal,
          p.midi, p.som, p.timbre, p.vol, p.raiz, p.inteira, p.seguir, p.atk, p.rel);
     bjson(b, nm); bstr(b, ",\"caminho\":"); bjson(b, pth); bstr(b, ",\"memorias\":[");
     for (int i = 0; i < 8; i++) { if (i) bstr(b, ","); if (mem[i].ok) bfmt(b, "{\"reg\":%u,\"passos\":%d}", mem[i].reg, mem[i].len); else bstr(b, "null"); }
@@ -608,6 +612,7 @@ void tm_http(TmCore *c, const char *method, const char *path, const char *query,
         else if (sscanf(body, "bit %d", &a) == 1) push_op(c, OP_BIT, a, 0);
         else if (!strncmp(body, "tocar", 5)) push_op(c, OP_TOCAR, 0, 0);
         else if (!strncmp(body, "parar", 5)) push_op(c, OP_PARAR, 0, 0);
+        else if (sscanf(body, "escrever %d", &a) == 1) push_op(c, OP_ESCREVER, a > 0 ? 1 : a < 0 ? -1 : 0, 0);
         else if (sscanf(body, "salvar %d", &a) == 1 && a >= 1 && a <= 8) {
             pthread_mutex_lock(&c->mx); c->mem[a - 1] = (Mem) { 1, __atomic_load_n(&c->aReg, __ATOMIC_RELAXED), c->pP.passos }; pthread_mutex_unlock(&c->mx);
         } else if (sscanf(body, "carregar %d", &a) == 1 && a >= 1 && a <= 8) {
