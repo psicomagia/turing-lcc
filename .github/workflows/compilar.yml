@@ -1,0 +1,56 @@
+name: Compilar
+
+on:
+  push:
+  workflow_dispatch:
+
+env:
+  JUCE_TAG: 8.0.9
+
+jobs:
+  mac:
+    name: Mac VST3 + AU (Apple Silicon + Intel)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Baixar JUCE
+        run: git clone --depth 1 --branch "$JUCE_TAG" https://github.com/juce-framework/JUCE.git JUCE
+      - name: Configurar
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+      - name: Compilar
+        run: cmake --build build --config Release -j 4
+      - name: Assinar (ad hoc) e empacotar
+        run: |
+          A="build/TuringLCC_artefacts/Release"
+          mkdir -p "pacote/Turing LCC"
+          cp -R "$A/VST3/Turing LCC.vst3" "$A/AU/Turing LCC.component" "$A/Standalone/Turing LCC.app" "pacote/Turing LCC/"
+          for f in "pacote/Turing LCC/"*; do codesign --force --deep --sign - "$f"; done
+          cp LEIA-ME.md "pacote/Turing LCC/"
+          cd pacote && ditto -c -k --keepParent "Turing LCC" ../Turing-LCC-mac.zip
+      - name: Validar o AU
+        continue-on-error: true
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R "pacote/Turing LCC/Turing LCC.component" ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          auval -v aumu Tlcc Alxs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Turing-LCC-mac
+          path: Turing-LCC-mac.zip
+
+  mpc:
+    name: MPC (VST2 armhf)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ferramentas
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q libasound2-dev zip
+          pip install --break-system-packages ziglang
+      - name: Compilar e empacotar
+        run: ALSA_INC=/usr/include sh mpc/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Turing-LCC-MPC
+          path: dist/Turing-LCC-MPC.zip

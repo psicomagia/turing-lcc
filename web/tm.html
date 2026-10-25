@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turing LCC</title>
+<style>
+:root{--bg:#f4f1ea;--panel:#fffdf8;--ink:#1d2130;--muted:#6d7385;--line:#ddd7ca;--acc:#c8321b;--gold:#f2c14e;
+  --r2:#fdf19b;--r3:#d5ecaa;--r4:#b4e4ee;--r5:#5b7bd9;--serif:"Iowan Old Style","Palatino Linotype",Georgia,serif;--sans:system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15171f;--panel:#1d2130;--ink:#e9ecf3;--muted:#9aa3b8;--line:#323850}}
+:root[data-theme="dark"]{--bg:#15171f;--panel:#1d2130;--ink:#e9ecf3;--muted:#9aa3b8;--line:#323850}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--sans);padding:16px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:14px}
+h1{font:600 30px var(--serif);margin:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.t{font:600 19px var(--serif);margin:0 0 8px}
+.row{display:flex;gap:10px 16px;flex-wrap:wrap;align-items:center}
+.meta{color:var(--muted);font-size:13px}
+.top{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.pill{border:1px solid var(--line);border-radius:99px;padding:3px 11px;font-size:13px;background:var(--bg)}
+.pill.run{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.now{display:flex;gap:16px;align-items:baseline}
+.now b{font:600 44px var(--serif);line-height:1}
+.now span{font:600 20px var(--serif);color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:14px}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+.reg{display:grid;grid-template-columns:repeat(16,1fr);gap:5px;margin:6px 0 10px}
+@media (max-width:640px){.reg{grid-template-columns:repeat(8,1fr)}}
+.bit{aspect-ratio:1;border-radius:9px;border:1.5px solid var(--line);background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;font:600 12px var(--sans);color:var(--muted);position:relative;padding:0}
+.bit.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.bit.out{opacity:.28}
+.bit.cur{box-shadow:0 0 0 3px var(--gold)}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:7px 12px;font:inherit;font-weight:600;cursor:pointer}
+.btn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.on{background:var(--gold);color:#2a1d00;border-color:var(--gold)}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px}
+.seg button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:5px 9px;font:inherit;font-size:14px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ton button{font:600 16px var(--serif);min-width:38px}
+label.f{display:flex;gap:8px;align-items:center;font-size:14px}
+input[type=range]{width:150px;accent-color:var(--acc)}
+.val{font-variant-numeric:tabular-nums;min-width:58px;font-size:13px;color:var(--muted)}
+.big{display:flex;align-items:center;gap:8px}
+.big b{font:600 30px var(--serif);min-width:36px;text-align:center}
+.strip{display:grid;grid-template-columns:repeat(12,minmax(40px,1fr));gap:4px;margin-top:10px;overflow-x:auto}
+.cell{border:1px solid var(--line);border-radius:8px;padding:4px 2px;text-align:center;background:var(--bg);color:var(--muted)}
+.cell .o{font-size:10px}.cell .d{font-size:11px}.cell b{display:block;font:600 16px var(--serif)}
+.cell.on{color:#111;border-color:#111}
+.cell.cur{box-shadow:0 0 0 3px var(--gold)}
+.mem{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+.mem button{border:1px dashed var(--line);background:var(--bg);color:var(--muted);border-radius:9px;padding:9px 0;font:600 15px var(--sans);cursor:pointer}
+.mem button.full{border-style:solid;background:var(--panel);color:var(--ink)}
+.mem.gravando button{border-color:var(--acc)}
+.br{margin-top:10px;border:1px solid var(--line);border-radius:10px;max-height:260px;overflow:auto}
+.br .p{position:sticky;top:0;background:var(--panel);padding:7px 10px;border-bottom:1px solid var(--line);font-size:13px;display:flex;gap:8px;align-items:center}
+.br .it{padding:7px 12px;border-bottom:1px solid var(--line);cursor:pointer;font-size:14px}
+.br .it:hover{background:var(--bg)}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+select{font:inherit;padding:4px 6px;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.off{opacity:.45;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="card">Conectando ao plugin…</div></div>
+<script>
+(function(){
+'use strict';
+const KEYS=['F','C','G','D','A','E','B','Gb','Db','Ab','Eb','Bb'];
+const PC={C:0,Db:1,D:2,Eb:3,E:4,F:5,Gb:6,G:7,Ab:8,A:9,Bb:10,B:11};
+const NOMEPC=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const CGORD=[0,7,2,9,4,11,6,8,3,10,5,1],CGOL=['T','V','II','VI','III','VII','#IV','#V','bIII','bVII','IV','bII'];
+const ESC=[['Lídio',[0,2,4,6,7,9,11],2],['Lídio aumentado',[0,2,4,6,8,9,11],3],['Lídio diminuto',[0,2,3,6,7,9,11],4],['Lídio b7',[0,2,4,6,7,9,10],5],
+  ['Auxiliar aumentada',[0,2,4,6,8,10],6],['Auxiliar diminuta',[0,2,3,5,6,8,9,11],7],['Auxiliar dim. blues',[0,1,3,4,6,7,9,10],8],['Ordem tonal',null,0]];
+const RC={2:'var(--r2)',3:'var(--r3)',4:'var(--r4)',5:'var(--r5)',6:'#f6c1a8',7:'#e2c6f2',8:'#f2c6d6',0:'#e9ecf3'};
+const DIVS=['1/4','1/8','1/16','1/8T','1/16T'];
+const NN=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],nome=n=>NN[n%12]+(Math.floor(n/12)-2);
+let C=null,E=null,gravando=false,br=null,msg='',sendT=null,editing=0,pend={};
+const $=s=>document.querySelector(s),app=$('#app');
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function pcs(){if(!C)return[];if(C.escala===7)return CGORD.slice(0,C.ordem);return ESC[C.escala][1];}
+function draw(){
+  if(!C){app.innerHTML='<div class="card">Conectando ao plugin…</div>';return;}
+  const allowed=new Set(pcs()),cor=RC[ESC[C.escala][2]];
+  const sp=(nm,k,min,max,v,fmt)=>`<label class="f">${nm}<input type="range" min="${min}" max="${max}" data-k="${k}" value="${v}"><span class="val" id="v_${k}">${fmt(v)}</span></label>`;
+  app.innerHTML=`
+  <div class="card top">
+    <div><h1>Turing LCC</h1><div class="meta">Turing Machine com as escalas do Conceito Lídio Cromático</div>
+      <div class="row" style="margin-top:8px" id="st"></div></div>
+    <div class="now" id="now"></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <p class="t">Registrador</p>
+      <div class="reg" id="reg">${Array.from({length:16},(_,i)=>`<button class="bit" data-bit="${i}" title="bit ${i+1}">${i+1}</button>`).join('')}</div>
+      <div class="row">
+        <div class="big"><button class="btn" data-a="pm">−</button><b id="passos">${C.passos}</b><button class="btn" data-a="pp">+</button><span class="meta">passos</span></div>
+        <button class="btn pri" data-a="novo">Novo</button><button class="btn" data-a="limpar">Limpar</button>
+      </div>
+      <div class="row" style="margin-top:12px">${sp('Mudança','mudanca',0,100,C.mudanca,v=>v==0?'fixo':v==100?'fixo ×2':v+'%')}</div>
+      <p class="hint">Mudança é a chance de cada bit virar quando volta ao começo: 0% repete a frase de ${C.passos} passos; 50% é totalmente aleatório; 100% repete invertendo (frase de ${C.passos*2}). Clique nos bits para escrever a frase.</p>
+      <p class="t" style="margin-top:14px">Memórias</p>
+      <div class="mem ${gravando?'gravando':''}">${C.memorias.map((m,i)=>`<button class="${m?'full':''}" data-m="${i+1}" title="${m?m.passos+' passos':'vazia'}">${i+1}</button>`).join('')}</div>
+      <div class="row" style="margin-top:8px"><button class="btn ${gravando?'on':''}" data-a="gravar">${gravando?'Escolha a memória…':'Gravar a frase atual'}</button><span class="meta">Clique numa memória para trazer a frase de volta.</span></div>
+    </div>
+    <div class="card">
+      <p class="t">Escala (LCC)</p>
+      <div class="meta">Tônica lídia</div>
+      <div class="seg ton" style="margin:4px 0 10px">${KEYS.map(k=>`<button class="${PC[k]===C.tonica?'on':''}" data-ton="${PC[k]}">${k}</button>`).join('')}</div>
+      <div class="seg">${ESC.map((e,i)=>`<button class="${i===C.escala?'on':''}" data-esc="${i}">${e[0]}</button>`).join('')}</div>
+      ${C.escala===7?`<div class="big" style="margin-top:10px"><button class="btn" data-a="om">−</button><b>${C.ordem}</b><button class="btn" data-a="op">+</button><span class="meta">primeiras notas da ordem tonal</span></div>`:''}
+      <div class="strip" id="strip">${CGORD.map((iv,i)=>{const pc=(C.tonica+iv)%12,on=allowed.has(iv);
+        return `<div class="cell ${on?'on':''}" data-iv="${iv}" style="${on?`background:${cor}`:''}"><span class="o">${i+1}</span><div class="d">${CGOL[i]}</div><b>${NOMEPC[pc]}</b></div>`;}).join('')}</div>
+      <div class="row" style="margin-top:12px">
+        <label class="f">Nota base <select data-k="base">${Array.from({length:61},(_,i)=>i+24).map(n=>`<option value="${n}" ${n===C.base?'selected':''}>${nome(n)}</option>`).join('')}</select></label>
+        <label class="f">Extensão <select data-k="extensao">${[1,2,3,4].map(o=>`<option value="${o}" ${o===C.extensao?'selected':''}>${o} oitava${o>1?'s':''}</option>`).join('')}</select></label>
+      </div>
+      <label class="f" style="margin-top:8px"><input type="checkbox" data-k="seguir" ${C.seguir?'checked':''}> Tônica pelas notas que chegam (pads/teclado)</label>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <p class="t">Ritmo</p>
+      <div class="row"><span class="meta">Divisão</span><div class="seg">${DIVS.map((d,i)=>`<button class="${i===C.divisao?'on':''}" data-div="${i}">${d}</button>`).join('')}</div></div>
+      <div class="row" style="margin-top:10px">
+        ${sp('Densidade','densidade',0,100,C.densidade,v=>v+'%')}
+        ${sp('Duração','duracao',5,100,C.duracao,v=>v+'%')}
+        ${sp('Acento','acento',0,100,C.acento,v=>v+'%')}
+        ${sp('Swing','swing',50,75,C.swing,v=>v==50?'reto':v+'%')}
+      </div>
+      <div class="row" style="margin-top:10px"><span class="meta">Relógio</span>
+        <div class="seg"><button class="${C.relogio===0?'on':''}" data-rel="0">do DAW / MPC</button><button class="${C.relogio===1?'on':''}" data-rel="1">interno</button></div>
+        ${C.relogio===1?`<label class="f">BPM <input type="number" min="30" max="300" data-k="bpm" value="${C.bpm}" style="width:70px"></label><button class="btn pri" data-a="tocar">▶ Tocar</button><button class="btn" data-a="parar">■ Parar</button>`:''}
+      </div>
+      <p class="hint">Densidade decide quantos passos tocam (os silêncios também vêm do registrador, então se repetem com a frase).</p>
+    </div>
+    <div class="card">
+      <p class="t">Som e MIDI</p>
+      <div class="row">
+        <label class="f"><input type="checkbox" data-k="som" ${C.som?'checked':''}> Som próprio</label>
+        <label class="f"><input type="checkbox" data-k="midi" ${C.midi?'checked':''}> Mandar MIDI</label>
+        <label class="f">Canal <select data-k="canal">${Array.from({length:16},(_,i)=>`<option ${i+1===C.canal?'selected':''}>${i+1}</option>`).join('')}</select></label>
+      </div>
+      <div class="row ${C.som?'':'off'}" style="margin-top:10px">
+        <div><div class="meta">Som</div><b style="font:600 18px var(--serif)">${C.amostra?esc(C.amostra):(C.timbre?'Piano elétrico':'Lead')}</b></div>
+        <button class="btn" data-a="abrir">${br?'Fechar lista':'Escolher sample (WAV)'}</button>
+        ${C.amostra?'<button class="btn" data-a="semsample">Usar timbre interno</button>':`<div class="seg"><button class="${!C.timbre?'on':''}" data-tim="0">Lead</button><button class="${C.timbre?'on':''}" data-tim="1">Piano elétrico</button></div>`}
+      </div>
+      <div class="row ${C.som?'':'off'}" style="margin-top:8px">
+        ${C.amostra?`<label class="f">Nota do sample <select data-k="raiz">${Array.from({length:97},(_,i)=>i+12).map(n=>`<option value="${n}" ${n===C.raiz?'selected':''}>${nome(n)}</option>`).join('')}</select></label>
+        <label class="f"><input type="checkbox" data-k="inteira" ${C.inteira?'checked':''}> Toca o sample inteiro</label>`:''}
+        ${sp('Volume','volume',0,100,C.volume,v=>v+'%')}
+        ${sp('Soltura','soltura',10,3000,Math.round(C.soltura*1000),v=>(v/1000).toFixed(2)+' s')}
+      </div>
+      <div id="msg" class="hint">${esc(msg)}</div>
+      ${br?`<div class="br"><div class="p"><button class="btn" data-a="subir">↑</button><span>${esc(br.dir)}</span></div>
+        ${br.pastas.map(p=>`<div class="it" data-dir="${esc(p)}">📁 ${esc(p)}</div>`).join('')}
+        ${br.wavs.map(f=>`<div class="it" data-wav="${esc(f)}">🎵 <b>${esc(f)}</b></div>`).join('')}
+        ${!br.pastas.length&&!br.wavs.length?'<div class="it">Pasta vazia</div>':''}</div>`:''}
+    </div>
+  </div>`;
+  live();
+}
+function live(){
+  if(!C)return;const e=E||{reg:0,pos:0,passos:C.passos,run:0,nome:'-',grau:'-',gate:0,bpm:0,host:0};
+  document.querySelectorAll('#reg .bit').forEach((b,i)=>{b.classList.toggle('on',!!((e.reg>>i)&1));b.classList.toggle('out',i>=C.passos);b.classList.toggle('cur',i===0&&!!e.run);});
+  const st=$('#st');if(st)st.innerHTML=`<span class="pill ${e.run?'run':''}">${e.run?'tocando':'parado'}</span><span class="pill">${C.relogio?'relógio interno':'relógio do '+(e.host?'DAW / MPC':'host')} · ${Math.round(e.bpm||C.bpm)} BPM</span><span class="pill">passo ${(e.pos||0)+1} de ${C.passos}</span>`;
+  const nw=$('#now');if(nw)nw.innerHTML=`<div><div class="meta">Nota</div><b>${e.gate&&e.nota>0?e.nome:'—'}</b></div><div><div class="meta">Grau</div><span>${e.gate&&e.nota>0?e.grau:'—'}</span></div><div><div class="meta">Escala</div><span>${NOMEPC[C.tonica]} ${ESC[C.escala][0]}${C.escala===7?' 1–'+C.ordem:''}</span></div>`;
+  document.querySelectorAll('#strip .cell').forEach(el=>{el.classList.toggle('cur',!!(e.gate&&e.nota>0&&((e.nota-C.tonica)%12+12)%12===+el.dataset.iv));});
+}
+
+async function api(path,opt){const r=await fetch(path,Object.assign({cache:'no-store'},opt||{}));return r;}
+async function loadCfg(){try{const r=await api('/cfg');C=await r.json();}catch(e){}}
+function set(k,v){C[k]=v;pend[k]=v;editing=Date.now();clearTimeout(sendT);sendT=setTimeout(flush,120);}
+async function flush(){const b=Object.entries(pend).map(([k,v])=>k+' '+(typeof v==='boolean'?(v?1:0):v)).join('\n')+'\n';pend={};
+  try{await api('/cfg',{method:'POST',body:b});}catch(e){}}
+async function acao(a){try{await api('/acao',{method:'POST',body:a});}catch(e){}}
+async function listar(d){try{const r=await api('/pastas?d='+encodeURIComponent(d||''));if(!r.ok){msg='Pasta não encontrada.';br=null;}else{br=await r.json();msg='';try{localStorage.setItem('tm-dir',br.dir);}catch(e){}}}catch(e){msg='Sem conexão.';}draw();}
+async function sample(p){msg='Carregando…';draw();try{const r=await api('/amostra',{method:'POST',body:p});msg=r.ok?'':await r.text();}catch(e){msg='Sem conexão.';}await loadCfg();draw();}
+
+app.addEventListener('click',async e=>{const t=e.target.closest('[data-a],[data-bit],[data-ton],[data-esc],[data-div],[data-rel],[data-tim],[data-m],[data-dir],[data-wav]');if(!t||!C)return;
+  const d=t.dataset;
+  if(d.bit!=null){acao('bit '+d.bit);if(E){E.reg^=1<<+d.bit;live();}return;}
+  if(d.ton!=null){set('tonica',+d.ton);draw();return;}
+  if(d.esc!=null){set('escala',+d.esc);draw();return;}
+  if(d.div!=null){set('divisao',+d.div);draw();return;}
+  if(d.rel!=null){set('relogio',+d.rel);draw();return;}
+  if(d.tim!=null){set('timbre',+d.tim);draw();return;}
+  if(d.m!=null){const i=+d.m;if(gravando){gravando=false;await acao('salvar '+i);await loadCfg();draw();}else if(C.memorias[i-1]){await acao('carregar '+i);C.passos=C.memorias[i-1].passos;draw();}return;}
+  if(d.dir!=null&&br){listar(br.dir.replace(/\/$/,'')+'/'+d.dir);return;}
+  if(d.wav!=null&&br){sample(br.dir.replace(/\/$/,'')+'/'+d.wav);return;}
+  const a=d.a;
+  if(a==='pm'||a==='pp'){set('passos',Math.max(2,Math.min(16,C.passos+(a==='pp'?1:-1))));draw();}
+  else if(a==='om'||a==='op'){set('ordem',Math.max(1,Math.min(12,C.ordem+(a==='op'?1:-1))));draw();}
+  else if(a==='novo'||a==='limpar'||a==='tocar'||a==='parar')acao(a);
+  else if(a==='gravar'){gravando=!gravando;draw();}
+  else if(a==='abrir'){if(br){br=null;draw();}else{let d0='';try{d0=localStorage.getItem('tm-dir')||'';}catch(e){}listar(d0||C.inicio);}}
+  else if(a==='subir'&&br)listar(br.dir.replace(/\/[^/]+\/?$/,'')||'/');
+  else if(a==='semsample')sample('');
+});
+app.addEventListener('input',e=>{const k=e.target.dataset.k;if(!k||!C||e.target.type!=='range')return;
+  let v=+e.target.value;const sp=$('#v_'+k);
+  if(k==='soltura'){set(k,v/1000);if(sp)sp.textContent=(v/1000).toFixed(2)+' s';return;}
+  set(k,v);if(sp)sp.textContent=k==='mudanca'?(v==0?'fixo':v==100?'fixo ×2':v+'%'):k==='swing'?(v==50?'reto':v+'%'):v+'%';});
+app.addEventListener('change',e=>{const t=e.target,k=t.dataset.k;if(!k||!C||t.type==='range')return;
+  set(k,t.type==='checkbox'?(t.checked?1:0):+t.value);if(t.tagName==='SELECT'||t.type==='checkbox')draw();});
+
+let lastN=-1;
+async function poll(){
+  try{const r=await api('/estado');E=await r.json();
+    if(E&&C&&Date.now()-editing>1500&&(E.tonica!==C.tonica||E.passos!==C.passos)){await loadCfg();draw();}   // Q-Links da MPC / seguir tônica
+    else live();lastN=E.n;}catch(e){}
+  setTimeout(poll,90);
+}
+(async()=>{await loadCfg();draw();poll();})();
+})();
+</script>
+</body>
+</html>

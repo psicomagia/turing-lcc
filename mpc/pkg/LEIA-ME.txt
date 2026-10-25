@@ -1,0 +1,28 @@
+Turing LCC para a MPC (Gen1, firmware com SSH, ex.: Hakai)
+
+Sequenciador no estilo Turing Machine: um registrador de 16 bits gera a melodia,
+e as notas vêm do Conceito Lídio Cromático (tônica lídia + escala do anel, ou as
+primeiras N notas da ordem tonal). Toca com som próprio (timbre interno ou um WAV seu).
+
+INSTALAR (Terminal do Mac; troque o IP se o da MPC for outro; salve o projeto antes)
+  scp -r ~/Downloads/Turing-LCC-MPC root@192.168.68.54:/tmp/
+  ssh root@192.168.68.54 "sh /tmp/Turing-LCC-MPC/install.sh -y"
+
+USAR
+  1. Na MPC, crie uma trilha de plugin e escolha "Turing LCC". Dê play na MPC.
+  2. A página fica em http://192.168.68.54:8100 (o parâmetro "Pagina" mostra o endereço).
+  3. Passos (2 a 16) = tamanho da frase. Mudança: 0% repete a frase, 50% é totalmente
+     aleatório, 100% repete invertendo (frase com o dobro de passos). Clique nos bits
+     para escrever a frase; "Novo" sorteia outra; Memórias guardam frases.
+  4. Escala: tônica lídia + Lídio, aumentado, diminuto, b7, auxiliares, ou Ordem tonal 1..12.
+  5. Q-Links/parâmetros: Mudanca, Passos, Densidade, Tonica, Escala, Extensao, Divisao,
+     Volume e Novo.
+  6. "Tônica pelas notas que chegam": toque um pad/tecla e a tônica lídia muda para essa nota.
+
+MIDI PARA OUTRAS TRILHAS (opcional)
+  A MPC não encaminha o MIDI de plugins. Com "Mandar MIDI" ligado, o plugin abre uma
+  porta MIDI própria chamada "Turing LCC". Em Preferences > MIDI, ligue "Enable Track"
+  nessa porta e escolha-a como entrada MIDI de outra trilha (canal configurado na página).
+
+REMOVER
+  ssh root@192.168.68.54 "sh /tmp/Turing-LCC-MPC/uninstall.sh -y"
