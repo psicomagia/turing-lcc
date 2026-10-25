@@ -42,6 +42,13 @@ void tm_param_set(TmCore *c, int i, float v);
 void tm_param_display(TmCore *c, int i, char *out, size_t n);
 void tm_set_page_info(TmCore *c, const char *text);        /* o que o parâmetro 0 mostra (ex.: endereço da página) */
 
+/* chave/valor para a tela da MPC (mpc/tm_engine.c, wrapper mpc-vst): números, "<chave>_display" (texto do valor),
+ * "<chave>_on" (casas acesas: bit_N, ivN_1, mem_N), leituras (nota, info, pagina) e "state" (projeto) */
+int tm_kv_get(TmCore *c, const char *key, char *out, int n);   /* > 0 quando a chave existe */
+void tm_kv_set(TmCore *c, const char *key, const char *val);
+extern const char *const TM_KV_NUM[];                            /* chaves numéricas, terminadas em NULL */
+void tm_kv_values(TmCore *c, int *out);                         /* os valores delas, na mesma ordem */
+
 #ifdef __cplusplus
 }
 #endif

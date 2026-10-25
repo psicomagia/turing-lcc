@@ -131,6 +131,32 @@ int main(void) {
     char d[64]; tm_param_set(c, 2, 1.0f); tm_param_display(c, 2, d, sizeof d);
     CHECK(!strcmp(d, "16"), "parâmetro Passos = 16");
     tm_param_set(c, 5, 1.0f); tm_param_display(c, 5, d, sizeof d); printf("  escala no máximo: %s\n", d);
+
+    puts("9) chave/valor da tela da MPC");
+    tm_kv_set(c, "tonica", "1"); tm_kv_set(c, "escala", "0");
+    tm_kv_get(c, "tonica_display", d, sizeof d); CHECK(!strcmp(d, "C"), "knob Tônica 1 = C (ordem F C G ...)");
+    tm_kv_get(c, "iv7_1", d, sizeof d); printf("  casa 7 do círculo: %s\n", d);
+    CHECK(!strcmp(d, "#IV F#") || !strcmp(d, "#IV Gb"), "casa 7 = #IV de C");
+    tm_kv_get(c, "iv12_1_on", d, sizeof d); CHECK(!strcmp(d, "0"), "bII fora do Lídio");
+    tm_kv_set(c, "iv12_1", "1");
+    tm_kv_get(c, "escala", d, sizeof d); CHECK(!strcmp(d, "8"), "tocar numa casa passa para Personalizada");
+    tm_kv_get(c, "iv12_1_on", d, sizeof d); char d2[64]; tm_kv_get(c, "iv2_1_on", d2, sizeof d2);
+    CHECK(!strcmp(d, "1") && !strcmp(d2, "1"), "bII ligado e o resto do Lídio mantido");
+    tm_kv_set(c, "limpar", "1"); tm_kv_set(c, "relogio", "1"); tm_kv_set(c, "rodar", "1");
+    for (int i = 0; i < 20; i++) { int no = 0; tm_process(c, 441, NULL, L, R, out, &no, 256); }
+    tm_kv_get(c, "bit_1_on", d, sizeof d); CHECK(!strcmp(d, "0"), "limpar apaga os LEDs");
+    tm_kv_set(c, "bit_1", "1"); tm_kv_get(c, "bit_1_on", d, sizeof d); CHECK(!strcmp(d, "1"), "tocar num LED acende o bit");
+    tm_kv_get(c, "rodar", d, sizeof d); CHECK(!strcmp(d, "1"), "tocar (relógio interno) ligado");
+    tm_kv_set(c, "gravar", "1"); tm_kv_set(c, "mem_3", "1");
+    tm_kv_get(c, "mem_3_on", d, sizeof d); tm_kv_get(c, "gravar", d2, sizeof d2);
+    CHECK(!strcmp(d, "1") && !strcmp(d2, "0"), "gravar + memória 3 guarda a frase e sai do modo gravar");
+    tm_kv_set(c, "trava", "100"); tm_kv_get(c, "trava_display", d, sizeof d); CHECK(!strcmp(d, "fixo"), "knob todo à direita = fixo");
+    int vals[64]; tm_kv_values(c, vals); CHECK(vals[0] == 100, "valores numéricos para a tela");
+    char stb[8192]; int sl = tm_kv_get(c, "state", stb, sizeof stb);
+    TmCore *c3 = tm_new(44100, "/tmp"); tm_kv_set(c3, "state", stb);
+    tm_kv_get(c3, "escala", d, sizeof d); tm_kv_get(c3, "mem_3_on", d2, sizeof d2);
+    CHECK(sl > 0 && !strcmp(d, "8") && !strcmp(d2, "1"), "projeto pela chave state");
+    tm_free(c3);
     tm_free(c); tm_free(c2);
     printf("\n%s (%d falhas)\n", fails ? "COM FALHAS" : "TUDO OK", fails);
     return fails != 0;

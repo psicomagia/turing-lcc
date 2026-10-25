@@ -1,0 +1,540 @@
+{
+ "name": "Turing LCC",
+ "params": [
+  {
+   "key": "pagina",
+   "name": "Pagina",
+   "min": 0,
+   "max": 1,
+   "type": "readout",
+   "display": "string"
+  },
+  {
+   "key": "trava",
+   "name": "Mudanca",
+   "min": 0,
+   "max": 100,
+   "display": "int",
+   "default": 50
+  },
+  {
+   "key": "passos",
+   "name": "Length",
+   "min": 2,
+   "max": 16,
+   "display": "int",
+   "default": 8
+  },
+  {
+   "key": "escrever",
+   "name": "Write",
+   "options": [
+    "+ 1",
+    "livre",
+    "- 0"
+   ],
+   "default": 1
+  },
+  {
+   "key": "novo",
+   "name": "Novo",
+   "min": 0,
+   "max": 1,
+   "momentary": true,
+   "type": "trigger"
+  },
+  {
+   "key": "limpar",
+   "name": "Limpar",
+   "min": 0,
+   "max": 1,
+   "momentary": true,
+   "type": "trigger"
+  },
+  {
+   "key": "tonica",
+   "name": "Tonica",
+   "min": 0,
+   "max": 11,
+   "display": "int",
+   "default": 0
+  },
+  {
+   "key": "escala",
+   "name": "Escala",
+   "options": [
+    "Lidio",
+    "Lidio aumentado",
+    "Lidio diminuto",
+    "Lidio b7",
+    "Aux. aumentada",
+    "Aux. diminuta",
+    "Aux. dim. blues",
+    "Ordem tonal",
+    "Personalizada"
+   ]
+  },
+  {
+   "key": "ordem",
+   "name": "Ordem",
+   "min": 1,
+   "max": 12,
+   "display": "int",
+   "default": 7
+  },
+  {
+   "key": "base",
+   "name": "Nota base",
+   "min": 12,
+   "max": 96,
+   "display": "int",
+   "default": 60
+  },
+  {
+   "key": "extensao",
+   "name": "Extensao",
+   "min": 1,
+   "max": 4,
+   "display": "int",
+   "default": 2
+  },
+  {
+   "key": "divisao",
+   "name": "Divisao",
+   "options": [
+    "1/4",
+    "1/8",
+    "1/16",
+    "1/8T",
+    "1/16T"
+   ],
+   "default": 2
+  },
+  {
+   "key": "densidade",
+   "name": "Densidade",
+   "min": 0,
+   "max": 100,
+   "display": "int",
+   "default": 75
+  },
+  {
+   "key": "duracao",
+   "name": "Duracao",
+   "min": 5,
+   "max": 100,
+   "display": "int",
+   "default": 60
+  },
+  {
+   "key": "acento",
+   "name": "Acento",
+   "min": 0,
+   "max": 100,
+   "display": "int",
+   "default": 40
+  },
+  {
+   "key": "swing",
+   "name": "Swing",
+   "min": 50,
+   "max": 75,
+   "display": "int",
+   "default": 50
+  },
+  {
+   "key": "volume",
+   "name": "Volume",
+   "min": 0,
+   "max": 100,
+   "display": "int",
+   "default": 80
+  },
+  {
+   "key": "soltura",
+   "name": "Soltura",
+   "min": 10,
+   "max": 3000,
+   "display": "int",
+   "default": 250
+  },
+  {
+   "key": "relogio",
+   "name": "Relogio",
+   "options": [
+    "DAW/MPC",
+    "Interno"
+   ]
+  },
+  {
+   "key": "bpm",
+   "name": "BPM",
+   "min": 30,
+   "max": 300,
+   "display": "int",
+   "default": 110
+  },
+  {
+   "key": "rodar",
+   "name": "Tocar",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "canal",
+   "name": "Canal MIDI",
+   "min": 1,
+   "max": 16,
+   "display": "int",
+   "default": 1
+  },
+  {
+   "key": "midi",
+   "name": "MIDI",
+   "options": [
+    "Off",
+    "On"
+   ],
+   "default": 1
+  },
+  {
+   "key": "som",
+   "name": "Som",
+   "options": [
+    "Off",
+    "On"
+   ],
+   "default": 1
+  },
+  {
+   "key": "timbre",
+   "name": "Timbre",
+   "options": [
+    "Lead",
+    "Piano el."
+   ]
+  },
+  {
+   "key": "seguir",
+   "name": "Seguir pads",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "gravar",
+   "name": "Gravar",
+   "options": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "key": "nota",
+   "name": "Nota",
+   "min": 0,
+   "max": 1,
+   "type": "readout",
+   "display": "string"
+  },
+  {
+   "key": "info",
+   "name": "Info",
+   "min": 0,
+   "max": 1,
+   "type": "readout",
+   "display": "string"
+  },
+  {
+   "key": "bit_1",
+   "name": "Bit 1",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_2",
+   "name": "Bit 2",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_3",
+   "name": "Bit 3",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_4",
+   "name": "Bit 4",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_5",
+   "name": "Bit 5",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_6",
+   "name": "Bit 6",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_7",
+   "name": "Bit 7",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_8",
+   "name": "Bit 8",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_9",
+   "name": "Bit 9",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_10",
+   "name": "Bit 10",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_11",
+   "name": "Bit 11",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_12",
+   "name": "Bit 12",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_13",
+   "name": "Bit 13",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_14",
+   "name": "Bit 14",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_15",
+   "name": "Bit 15",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "bit_16",
+   "name": "Bit 16",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "iv1_1",
+   "name": "Nota 1",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "iv2_1",
+   "name": "Nota 2",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "iv3_1",
+   "name": "Nota 3",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "iv4_1",
+   "name": "Nota 4",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "iv5_1",
+   "name": "Nota 5",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "iv6_1",
+   "name": "Nota 6",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "iv7_1",
+   "name": "Nota 7",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "iv8_1",
+   "name": "Nota 8",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "iv9_1",
+   "name": "Nota 9",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "iv10_1",
+   "name": "Nota 10",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "iv11_1",
+   "name": "Nota 11",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "iv12_1",
+   "name": "Nota 12",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "mem_1",
+   "name": "Memoria 1",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "mem_2",
+   "name": "Memoria 2",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "mem_3",
+   "name": "Memoria 3",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "mem_4",
+   "name": "Memoria 4",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "mem_5",
+   "name": "Memoria 5",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "mem_6",
+   "name": "Memoria 6",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "mem_7",
+   "name": "Memoria 7",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  },
+  {
+   "key": "mem_8",
+   "name": "Memoria 8",
+   "min": 0,
+   "max": 1,
+   "type": "slot",
+   "display": "string"
+  }
+ ]
+}

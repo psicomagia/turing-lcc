@@ -1,0 +1,31 @@
+{
+  "name": "Turing LCC",
+  "vendor": "Alex Sheeny",
+  "uid": "TmLc",
+  "version": 1100,
+  "so": "turing-lcc.so",
+  "params": "params.json",
+  "layout": "layout.conf",
+  "cc": false,
+  "defines": {
+    "HAS_SONG_POS": 1,
+    "PARAM_TEXT_MAX": 32,
+    "SAMPLE_ACCURATE": 1
+  },
+  "build": {
+    "root": "../..",
+    "sources": [
+      "core/tm.c",
+      "mpc/tm_engine.c"
+    ],
+    "cflags": [
+      "-Icore"
+    ],
+    "libs": [
+      "-lm",
+      "-ldl",
+      "-lpthread"
+    ]
+  },
+  "art": "html"
+}

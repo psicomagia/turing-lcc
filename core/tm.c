@@ -149,6 +149,7 @@ struct TmCore {
     TmMidi in[256]; int nin;
     /* para a interface */
     uint16_t aReg; int aPos, aNote, aRun, aHost, aTon, aLen, aBpm100; unsigned aSteps; int aGate;
+    int wsel, gravar;          /* tela da MPC: chave WRITE (0 = +1, 1 = livre, 2 = -0) e modo gravar memória */
 };
 
 static uint32_t xs(uint32_t *s) { uint32_t x = *s; x ^= x << 13; x ^= x >> 17; x ^= x << 5; return *s = x ? x : 0x9E3779B9u; }
@@ -164,7 +165,7 @@ TmCore *tm_new(double sr, const char *startDir) {
     c->rng = 0x1234567u ^ (uint32_t) (uintptr_t) c;
     for (int i = 0; i < 8; i++) xs(&c->rng);
     c->reg = (uint16_t) xs(&c->rng); c->aReg = c->reg;
-    c->melNote = -1; c->lastEnd = -1; c->voiceMel = -1;
+    c->melNote = -1; c->lastEnd = -1; c->voiceMel = -1; c->wsel = 1;
     snprintf(c->startDir, sizeof c->startDir, "%s", startDir && *startDir ? startDir : "/");
     snprintf(c->pageInfo, sizeof c->pageInfo, "-");
     c->dirty = 1;
@@ -246,8 +247,8 @@ static void pull(TmCore *c) {
         else if (o.op == OP_LIMPAR) c->reg = 0;
         else if (o.op == OP_BIT && o.a >= 0 && o.a < 16) c->reg ^= (uint16_t) (1u << o.a);
         else if (o.op == OP_REG) { c->reg = (uint16_t) o.a; if (o.b >= 2 && o.b <= 16) c->P.passos = c->pP.passos = o.b; }
-        else if (o.op == OP_TOCAR) { c->intRun = 1; c->intPpq = 0; }
-        else if (o.op == OP_PARAR) c->intRun = 0;
+        else if (o.op == OP_TOCAR) { __atomic_store_n(&c->intRun, 1, __ATOMIC_RELAXED); c->intPpq = 0; }
+        else if (o.op == OP_PARAR) __atomic_store_n(&c->intRun, 0, __ATOMIC_RELAXED);
         else if (o.op == OP_ESCREVER) c->escrever = o.a;
     }
     __atomic_store_n(&c->nops, 0, __ATOMIC_RELEASE);
@@ -658,4 +659,135 @@ void tm_state_load(TmCore *c, const char *data, size_t len) {
         else if (!strncmp(line, "amostra ", 8)) { char err[160]; if (line[8]) { if (load_sample(c, line + 8, 0, err, sizeof err)) publish_sample(c, NULL); } else publish_sample(c, NULL); }
     }
     free(t);
+}
+
+/* ---------------- chave/valor (tela da MPC: wrapper mpc-vst, um parâmetro por chave) ---------------- */
+static const int KEYPC[12] = { 5, 0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10 };   /* knob Tônica: F C G D A E B Gb Db Ab Eb Bb */
+static int ton_idx(int pc) { for (int i = 0; i < 12; i++) if (KEYPC[i] == pc) return i; return 0; }
+static int scale_mask(const Par *p) {
+    int m = 0;
+    if (p->esc == 7) for (int i = 0; i < p->ordK; i++) m |= 1 << CGORD[i];
+    else if (p->esc == 8) m = p->masc;
+    else for (int i = 0; ESC_IV[p->esc][i] >= 0; i++) m |= 1 << ESC_IV[p->esc][i];
+    return m;
+}
+static int slot_idx(const char *k, const char *pre, int max) {   /* "bit_3" -> 3 */
+    size_t l = strlen(pre); if (strncmp(k, pre, l)) return 0;
+    int i = atoi(k + l); return i >= 1 && i <= max ? i : 0;
+}
+static int iv_idx(const char *k) {   /* "iv5_1" -> 5 */
+    if (strncmp(k, "iv", 2)) return 0;
+    int i = atoi(k + 2); const char *u = strchr(k, '_');
+    return u && !strcmp(u, "_1") && i >= 1 && i <= 12 ? i : 0;
+}
+const char *const TM_KV_NUM[] = { "trava", "passos", "escrever", "tonica", "escala", "ordem", "base", "extensao", "divisao", "densidade", "duracao",
+    "acento", "swing", "volume", "soltura", "relogio", "bpm", "rodar", "canal", "midi", "som", "timbre", "seguir", "gravar", NULL };
+static int num_of(TmCore *c, const Par *p, const char *k, int *v) {
+    if (!strcmp(k, "trava")) *v = 100 - p->mud; else if (!strcmp(k, "passos")) *v = p->passos;
+    else if (!strcmp(k, "escrever")) *v = __atomic_load_n(&c->wsel, __ATOMIC_RELAXED);
+    else if (!strcmp(k, "tonica")) *v = ton_idx(p->ton); else if (!strcmp(k, "escala")) *v = p->esc; else if (!strcmp(k, "ordem")) *v = p->ordK;
+    else if (!strcmp(k, "base")) *v = p->base; else if (!strcmp(k, "extensao")) *v = p->ext; else if (!strcmp(k, "divisao")) *v = p->div;
+    else if (!strcmp(k, "densidade")) *v = p->dens; else if (!strcmp(k, "duracao")) *v = p->dur; else if (!strcmp(k, "acento")) *v = p->acento;
+    else if (!strcmp(k, "swing")) *v = p->swing; else if (!strcmp(k, "volume")) *v = p->vol; else if (!strcmp(k, "soltura")) *v = (int) lroundf(p->rel * 1000);
+    else if (!strcmp(k, "relogio")) *v = p->relogio; else if (!strcmp(k, "bpm")) *v = p->bpm;
+    else if (!strcmp(k, "rodar")) *v = p->relogio == 1 && __atomic_load_n(&c->intRun, __ATOMIC_RELAXED);
+    else if (!strcmp(k, "canal")) *v = p->canal; else if (!strcmp(k, "midi")) *v = p->midi; else if (!strcmp(k, "som")) *v = p->som;
+    else if (!strcmp(k, "timbre")) *v = p->timbre; else if (!strcmp(k, "seguir")) *v = p->seguir;
+    else if (!strcmp(k, "gravar")) *v = __atomic_load_n(&c->gravar, __ATOMIC_RELAXED);
+    else return 0;
+    return 1;
+}
+void tm_kv_values(TmCore *c, int *out) {
+    Par p = get_par(c);
+    for (int i = 0; TM_KV_NUM[i]; i++) if (!num_of(c, &p, TM_KV_NUM[i], &out[i])) out[i] = 0;
+}
+int tm_kv_get(TmCore *c, const char *k, char *o, int n) {
+    if (!k || !o || n < 2) return 0;
+    Par p = get_par(c); int v;
+    size_t kl = strlen(k);
+    int disp = kl > 8 && !strcmp(k + kl - 8, "_display"), on = kl > 3 && !strcmp(k + kl - 3, "_on");
+    char base[48]; snprintf(base, sizeof base, "%.*s", (int) (kl - (disp ? 8 : on ? 3 : 0)), k);
+    int reg = __atomic_load_n(&c->aReg, __ATOMIC_RELAXED), i;
+    if (!strcmp(k, "state")) { size_t L = 0; char *s = tm_state_save(c, &L); if (!s) return 0; int r = snprintf(o, (size_t) n, "%s", s); free(s); return r < n ? r : 0; }
+    if ((i = slot_idx(base, "bit_", 16))) {
+        if (on) return snprintf(o, (size_t) n, "%d", (reg >> (i - 1)) & 1);
+        return i <= p.passos ? snprintf(o, (size_t) n, "%d", i) : snprintf(o, (size_t) n, " ");
+    }
+    if ((i = iv_idx(base))) {
+        int iv = CGORD[i - 1];
+        if (on) return snprintf(o, (size_t) n, "%d", (scale_mask(&p) >> iv) & 1);
+        return snprintf(o, (size_t) n, "%s %s", CGOL[i - 1], TON_NOME[(p.ton + iv) % 12]);
+    }
+    if ((i = slot_idx(base, "mem_", 8))) {
+        Mem m; pthread_mutex_lock(&c->mx); m = c->mem[i - 1]; pthread_mutex_unlock(&c->mx);
+        if (on) return snprintf(o, (size_t) n, "%d", m.ok);
+        return snprintf(o, (size_t) n, "%d", i);
+    }
+    if (on) return 0;
+    if (!strcmp(base, "nota")) {
+        int note = __atomic_load_n(&c->aNote, __ATOMIC_RELAXED), gate = __atomic_load_n(&c->aGate, __ATOMIC_RELAXED), ton = __atomic_load_n(&c->aTon, __ATOMIC_RELAXED);
+        if (note <= 0 || !gate) return snprintf(o, (size_t) n, "-");
+        char nm[16]; nota_nome(note, nm, sizeof nm); int iv = ((note - ton) % 12 + 12) % 12;
+        for (int j = 0; j < 12; j++) if (CGORD[j] == iv) return snprintf(o, (size_t) n, "%s  %s", nm, CGOL[j]);
+        return snprintf(o, (size_t) n, "%s", nm);
+    }
+    if (!strcmp(base, "info")) {
+        int run = __atomic_load_n(&c->aRun, __ATOMIC_RELAXED), pos = __atomic_load_n(&c->aPos, __ATOMIC_RELAXED);
+        if (p.esc == 7) return snprintf(o, (size_t) n, "%s ordem 1-%d  %s %d/%d", TON_NOME[p.ton], p.ordK, run ? ">" : "||", pos + 1, p.passos);
+        return snprintf(o, (size_t) n, "%s %s  %s %d/%d", TON_NOME[p.ton], ESC_CURTO[p.esc], run ? ">" : "||", pos + 1, p.passos);
+    }
+    if (!strcmp(base, "pagina")) { pthread_mutex_lock(&c->mx); int r = snprintf(o, (size_t) n, "%s", c->pageInfo); pthread_mutex_unlock(&c->mx); return r; }
+    if (!num_of(c, &p, base, &v)) return 0;
+    if (!disp) return snprintf(o, (size_t) n, "%d", v);
+    if (!strcmp(base, "trava")) return snprintf(o, (size_t) n, p.mud <= 2 ? "fixo" : p.mud >= 98 ? "fixo x2" : (p.mud >= 47 && p.mud <= 53) ? "aleatorio" : "%d%%", p.mud);
+    if (!strcmp(base, "tonica")) return snprintf(o, (size_t) n, "%s", TON_NOME[p.ton]);
+    if (!strcmp(base, "base")) { char nm[16]; nota_nome(p.base, nm, sizeof nm); return snprintf(o, (size_t) n, "%s", nm); }
+    if (!strcmp(base, "extensao")) return snprintf(o, (size_t) n, "%d oit.", p.ext);
+    if (!strcmp(base, "soltura")) return snprintf(o, (size_t) n, "%.2f s", p.rel);
+    if (!strcmp(base, "ordem")) return snprintf(o, (size_t) n, "1-%d", p.ordK);
+    if (!strcmp(base, "densidade") || !strcmp(base, "duracao") || !strcmp(base, "acento") || !strcmp(base, "volume")) return snprintf(o, (size_t) n, "%d%%", v);
+    if (!strcmp(base, "swing")) return v == 50 ? snprintf(o, (size_t) n, "reto") : snprintf(o, (size_t) n, "%d%%", v);
+    return 0;   /* o wrapper usa o próprio formato (número ou nome da opção) */
+}
+void tm_kv_set(TmCore *c, const char *k, const char *val) {
+    if (!k || !val) return;
+    if (!strcmp(k, "state")) { tm_state_load(c, val, strlen(val) + 1); return; }
+    double d = atof(val); int v = (int) lround(d), on = d > 0.5, i;
+    if (!strcmp(k, "novo")) { if (on) push_op(c, OP_NOVO, 0, 0); return; }
+    if (!strcmp(k, "limpar")) { if (on) push_op(c, OP_LIMPAR, 0, 0); return; }
+    if (!strcmp(k, "escrever")) { v = clampi(v, 0, 2); __atomic_store_n(&c->wsel, v, __ATOMIC_RELAXED); push_op(c, OP_ESCREVER, v == 0 ? 1 : v == 2 ? -1 : 0, 0); return; }
+    if (!strcmp(k, "rodar")) { push_op(c, on ? OP_TOCAR : OP_PARAR, 0, 0); return; }
+    if (!strcmp(k, "gravar")) { __atomic_store_n(&c->gravar, on, __ATOMIC_RELAXED); return; }
+    if ((i = slot_idx(k, "bit_", 16))) {
+        int cur = (__atomic_load_n(&c->aReg, __ATOMIC_RELAXED) >> (i - 1)) & 1;
+        if (cur != on) { push_op(c, OP_BIT, i - 1, 0); __atomic_store_n(&c->aReg, (uint16_t) (__atomic_load_n(&c->aReg, __ATOMIC_RELAXED) ^ (1u << (i - 1))), __ATOMIC_RELAXED); }
+        return;
+    }
+    if ((i = slot_idx(k, "mem_", 8))) {   /* toque: grava (modo gravar) ou traz a frase */
+        if (__atomic_load_n(&c->gravar, __ATOMIC_RELAXED)) {
+            pthread_mutex_lock(&c->mx); c->mem[i - 1] = (Mem) { 1, __atomic_load_n(&c->aReg, __ATOMIC_RELAXED), c->pP.passos }; pthread_mutex_unlock(&c->mx);
+            __atomic_store_n(&c->gravar, 0, __ATOMIC_RELAXED);
+        } else {
+            Mem m; pthread_mutex_lock(&c->mx); m = c->mem[i - 1]; pthread_mutex_unlock(&c->mx);
+            if (m.ok) { Par p = get_par(c); p.passos = m.len; set_par(c, &p); push_op(c, OP_REG, m.reg, m.len); }
+        }
+        return;
+    }
+    Par p = get_par(c);
+    if ((i = iv_idx(k))) {   /* nota da ordem tonal: liga/desliga e passa para a escala personalizada */
+        int m = scale_mask(&p), bit = 1 << CGORD[i - 1];
+        m = on ? (m | bit) : (m & ~bit);
+        if (!m) return;
+        p.masc = m; p.esc = 8; set_par(c, &p); return;
+    }
+    if (!strcmp(k, "trava")) p.mud = 100 - v; else if (!strcmp(k, "passos")) p.passos = v;
+    else if (!strcmp(k, "tonica")) p.ton = KEYPC[clampi(v, 0, 11)]; else if (!strcmp(k, "escala")) p.esc = v; else if (!strcmp(k, "ordem")) p.ordK = v;
+    else if (!strcmp(k, "base")) p.base = v; else if (!strcmp(k, "extensao")) p.ext = v; else if (!strcmp(k, "divisao")) p.div = v;
+    else if (!strcmp(k, "densidade")) p.dens = v; else if (!strcmp(k, "duracao")) p.dur = v; else if (!strcmp(k, "acento")) p.acento = v;
+    else if (!strcmp(k, "swing")) p.swing = v; else if (!strcmp(k, "volume")) p.vol = v; else if (!strcmp(k, "soltura")) p.rel = (float) (d / 1000.0);
+    else if (!strcmp(k, "relogio")) p.relogio = v; else if (!strcmp(k, "bpm")) p.bpm = v; else if (!strcmp(k, "canal")) p.canal = v;
+    else if (!strcmp(k, "midi")) p.midi = on; else if (!strcmp(k, "som")) p.som = on; else if (!strcmp(k, "timbre")) p.timbre = v;
+    else if (!strcmp(k, "seguir")) p.seguir = on;
+    else return;
+    set_par(c, &p);
 }

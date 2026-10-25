@@ -10,14 +10,19 @@ INSTALAR (Terminal do Mac; troque o IP se o da MPC for outro; salve o projeto an
 
 USAR
   1. Na MPC, crie uma trilha de plugin e escolha "Turing LCC". Dê play na MPC.
-  2. A página fica em http://192.168.68.54:8100 (o parâmetro "Pagina" mostra o endereço).
-  3. Passos (2 a 16) = tamanho da frase. Mudança: 0% repete a frase, 50% é totalmente
-     aleatório, 100% repete invertendo (frase com o dobro de passos). Clique nos bits
-     para escrever a frase; "Novo" sorteia outra; Memórias guardam frases.
-  4. Escala: tônica lídia + Lídio, aumentado, diminuto, b7, auxiliares, ou Ordem tonal 1..12.
-  5. Q-Links/parâmetros: Mudanca, Passos, Densidade, Tonica, Escala, Extensao, Divisao,
-     Volume e Novo.
-  6. "Tônica pelas notas que chegam": toque um pad/tecla e a tônica lídia muda para essa nota.
+  2. A tela do plugin na MPC tem duas abas:
+     TURING - knob grande (direita = frase fixa, meio = aleatória, esquerda = fixa invertida),
+              os 16 LEDs do registrador (toque para virar um bit), Length, Write (+1 / livre / -0),
+              Novo, Limpar, densidade, extensão, divisão, memórias (ligue "Gravar memória" e toque
+              numa casa para guardar; toque numa casa acesa para trazer a frase de volta), e o
+              círculo do Quantizador LCC: tônica, escala e as 12 notas da ordem tonal. Tocar numa
+              nota do círculo liga/desliga essa nota e cria a sua escala Personalizada.
+     SOM E RITMO - duração, acento, swing, nota base, relógio (MPC ou interno), tempo, tônica pelos
+              pads, ordem tonal, som, MIDI, canal, volume, soltura e timbre.
+     Os Q-Links seguem a aba aberta.
+  3. A página no navegador continua em http://<ip-da-mpc>:8100 (o endereço aparece na tela do
+     plugin): lá ficam a escolha de sample WAV e o painel completo.
+  4. Na primeira instalação desta versão a MPC reinicia para carregar a tela (o install.sh faz isso).
 
 MIDI PARA OUTRAS TRILHAS (opcional)
   A MPC não encaminha o MIDI de plugins. Com "Mandar MIDI" ligado, o plugin abre uma
