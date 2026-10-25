@@ -11,6 +11,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #define NVO 12
 #define NOPS 64
@@ -188,17 +189,28 @@ static void set_par(TmCore *c, const Par *p) {
 static Par get_par(TmCore *c) { Par p; pthread_mutex_lock(&c->mx); p = c->pP; pthread_mutex_unlock(&c->mx); return p; }
 
 /* troca de sample sem a thread de áudio usar memória liberada */
+static int reclaim(TmCore *c) {   /* com o mutex: libera os antigos que o áudio já largou; devolve quantas vagas há */
+    unsigned ag = __atomic_load_n(&c->audioGen, __ATOMIC_ACQUIRE); int free_ = 0;
+    for (int i = 0; i < 8; i++) {
+        if (c->trash[i] && (int) (ag - c->trashGen[i]) >= 0) { sample_free(c->trash[i]); c->trash[i] = NULL; }
+        if (!c->trash[i]) free_++;
+    }
+    return free_;
+}
 static void publish_sample(TmCore *c, Sample *s) {
     pthread_mutex_lock(&c->mx);
-    unsigned ag = __atomic_load_n(&c->audioGen, __ATOMIC_ACQUIRE);
-    for (int i = 0; i < 8; i++) if (c->trash[i] && (int) (ag - c->trashGen[i]) >= 0) { sample_free(c->trash[i]); c->trash[i] = NULL; }
+    for (int tries = 0; !reclaim(c) && tries < 40; tries++) {   /* lista cheia: espera o áudio andar um bloco */
+        pthread_mutex_unlock(&c->mx);
+        struct timespec ts = { 0, 5000000 }; nanosleep(&ts, NULL);
+        pthread_mutex_lock(&c->mx);
+    }
+    if (!reclaim(c)) { sample_free(c->trash[0]); c->trash[0] = NULL; }   /* 200 ms sem áudio: ninguém está usando */
     Sample *old = c->cur;
     __atomic_store_n(&c->cur, s, __ATOMIC_RELEASE);
     unsigned g = __atomic_add_fetch(&c->gen, 1, __ATOMIC_SEQ_CST);
     if (old) {
         int put = 0;
         for (int i = 0; i < 8 && !put; i++) if (!c->trash[i]) { c->trash[i] = old; c->trashGen[i] = g; put = 1; }
-        if (!put) c->trash[0] = old, c->trashGen[0] = g;   /* lista cheia: o mais antigo vaza, nunca é liberado em uso */
     }
     pthread_mutex_unlock(&c->mx);
 }
