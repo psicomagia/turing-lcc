@@ -43,7 +43,7 @@ juce_add_plugin(TuringLCC
     NEEDS_CURL FALSE)
 
 juce_add_binary_data(TmWeb SOURCES web/tm.html)
-target_sources(TuringLCC PRIVATE juce/PluginProcessor.cpp juce/PluginEditor.cpp)
+target_sources(TuringLCC PRIVATE plugin/PluginProcessor.cpp plugin/PluginEditor.cpp)
 target_compile_definitions(TuringLCC PUBLIC JUCE_WEB_BROWSER=1 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)
 target_link_libraries(TuringLCC
     PRIVATE TmWeb tmcore juce::juce_audio_utils juce::juce_gui_extra
