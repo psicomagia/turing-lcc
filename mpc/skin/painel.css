@@ -1,0 +1,4 @@
+/* painel de alumínio escovado, serigrafia preta (estilo do módulo Turing Machine) */
+.frame-border { stroke: #1a1a1a; stroke-width: 1.4; }
+.frame-rule { stroke: #1a1a1a; }
+.frame-title { fill: #111111; letter-spacing: 3px; }
