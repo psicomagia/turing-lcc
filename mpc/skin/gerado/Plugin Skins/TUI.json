@@ -2034,7 +2034,7 @@
                                     "showWhenDataModelInvalid": "Show",
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
-                                    "bounds": "0 0 192 388",
+                                    "bounds": "0 0 556 220",
                                     "additionalInvalidatingHandles": []
                                 }
                             }
@@ -4622,7 +4622,7 @@
                                     "showWhenDataModelInvalid": "Show",
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
-                                    "bounds": "1068 126 192 388",
+                                    "bounds": "724 126 556 220",
                                     "additionalInvalidatingHandles": [
                                         "IndexedEnabling/1/2/Parameter 65"
                                     ]
@@ -4654,7 +4654,7 @@
                                     "showWhenDataModelInvalid": "Show",
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
-                                    "bounds": "1074 132 180 40",
+                                    "bounds": "730 174 180 40",
                                     "additionalInvalidatingHandles": [
                                         "IndexedEnabling/1/2/Parameter 65"
                                     ]
@@ -4686,7 +4686,7 @@
                                     "showWhenDataModelInvalid": "Show",
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
-                                    "bounds": "1074 174 180 40",
+                                    "bounds": "730 216 180 40",
                                     "additionalInvalidatingHandles": [
                                         "IndexedEnabling/1/2/Parameter 65"
                                     ]
@@ -4718,7 +4718,7 @@
                                     "showWhenDataModelInvalid": "Show",
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
-                                    "bounds": "1074 216 180 40",
+                                    "bounds": "730 258 180 40",
                                     "additionalInvalidatingHandles": [
                                         "IndexedEnabling/1/2/Parameter 65"
                                     ]
@@ -4750,7 +4750,7 @@
                                     "showWhenDataModelInvalid": "Show",
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
-                                    "bounds": "1074 258 180 40",
+                                    "bounds": "730 300 180 40",
                                     "additionalInvalidatingHandles": [
                                         "IndexedEnabling/1/2/Parameter 65"
                                     ]
@@ -4782,7 +4782,7 @@
                                     "showWhenDataModelInvalid": "Show",
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
-                                    "bounds": "1074 300 180 40",
+                                    "bounds": "912 174 180 40",
                                     "additionalInvalidatingHandles": [
                                         "IndexedEnabling/1/2/Parameter 65"
                                     ]
@@ -4814,7 +4814,7 @@
                                     "showWhenDataModelInvalid": "Show",
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
-                                    "bounds": "1074 342 180 40",
+                                    "bounds": "912 216 180 40",
                                     "additionalInvalidatingHandles": [
                                         "IndexedEnabling/1/2/Parameter 65"
                                     ]
@@ -4846,7 +4846,7 @@
                                     "showWhenDataModelInvalid": "Show",
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
-                                    "bounds": "1074 384 180 40",
+                                    "bounds": "912 258 180 40",
                                     "additionalInvalidatingHandles": [
                                         "IndexedEnabling/1/2/Parameter 65"
                                     ]
@@ -4878,7 +4878,7 @@
                                     "showWhenDataModelInvalid": "Show",
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
-                                    "bounds": "1074 426 180 40",
+                                    "bounds": "1094 174 180 40",
                                     "additionalInvalidatingHandles": [
                                         "IndexedEnabling/1/2/Parameter 65"
                                     ]
@@ -4910,7 +4910,7 @@
                                     "showWhenDataModelInvalid": "Show",
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
-                                    "bounds": "1074 468 180 40",
+                                    "bounds": "1094 216 180 40",
                                     "additionalInvalidatingHandles": [
                                         "IndexedEnabling/1/2/Parameter 65"
                                     ]
